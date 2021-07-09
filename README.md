@@ -1,8 +1,6 @@
 # Code for AGQA baselines
 
-Here we have included the code for our baselines HCRN, HME, and PSA. For all three baselines, we used their code for the FrameQA questions in the TGIF-QA benchmark, then adjusted to fit our data structure.
-
-These models are baselines for Action Genome Question Answering (AGQA). Find our paper [here](https://arxiv.org/pdf/2103.16002.pdf), and our benchmark data [here](https://cs.stanford.edu/people/ranjaykrishna/agqa/). 
+This repository contains code for our baselines HCRN, HME, and PSAC. For all three baselines, we used their code for the FrameQA questions in the TGIF-QA benchmark, then adjusted to fit our data structure. These models are the baselines used for Action Genome Question Answering (AGQA). Check out our paper [here](https://arxiv.org/pdf/2103.16002.pdf), and our benchmark data [here](https://cs.stanford.edu/people/ranjaykrishna/agqa/). 
 
 ```
 @inproceedings{GrundeMcLaughlin2021AGQA,
@@ -17,7 +15,7 @@ year={2021}
 
 ## Appearance Features
 
-We shared appearance features across models for consistency (resnet for appearance and resnext for accuracy). The format of those features is different across models, so we include 4 visual features files.
+We shared appearance features across models for consistency (RESNET for appearance and RESNEXT for accuracy). The format of those features differs across models, so we include 4 visual features files.
 
 * tgif-qa_frameqa_appearance_feat.h5
 * tgif-qa_frameqa_motion_feat.h5
@@ -26,14 +24,15 @@ We shared appearance features across models for consistency (resnet for appearan
 
 ## Questions formatted
 
-All three models use a csv version of the data. We have included the dataset in that formatting here: 
+All three models use a .csv version of the data. 
 
 * Balanced (--metric balanced): 
 * Compo (--metric compo): 
 * Steps (--metric steps_templ): 
 
 # Models
-For each model we’ve included the files we’ve changed. Throughout the files, areas that need paths updated are marked with the comment ```TODO: PATH```. For HCRN and HME, which save multiple versions of the model, the location to change that model is marked with the comment ```MODEL CHANGE```.
+
+For each model we’ve included the files with changed code. Throughout the files, areas that need paths updated are marked with the comment ```TODO: PATH```. HCRN and HME each save multiple versions of the mode. The location specifying which model will be used is marked with the comment ```MODEL CHANGE```.
 
 ## HCRN
 
@@ -58,7 +57,7 @@ Test: ```python validate.py --cfg configs/tgif_qa_frameqa.yml --metric [METRIC] 
 * DataLoader.py
 * model/HCRN.py
 * train.py
-* validate.py:
+* validate.py
 * preprocess/preprocess_features.py
 * preprocess/preprocess_questions.py
 * preproccess/datautils/tgif_qa.py
@@ -71,76 +70,78 @@ Test: ```python validate.py --cfg configs/tgif_qa_frameqa.yml --metric [METRIC] 
 
 ### Other adjustments
 
-*TODO: PATH: *
-Paths to be changed in DataLoader.py, train.py, validate.py, preprocess_features.py, preprocess_questions.py
+*TODO: PATH:*
+There are paths to be changed in DataLoader.py, train.py, validate.py, preprocess_features.py, preprocess_questions.py.
 
-*MODEL CHANGE: *
-Because AGQA is larger than TGIF-QA, we changed the original code to validate more often than every epoch. HCRN originally chose the model with the highest validation score, but we now save both that model, and the current model. Code to switch between these two options is in validate.py line 106.
+*MODEL CHANGE:*
+Because AGQA is larger than TGIF-QA, we changed the original code to validate more often than every epoch. HCRN originally chose the model with the highest validation score, but we now save both that model, and the current model. Code to switch between these two options is in validate.py, line 106.
    
 *Parameters:*
-Dropout of 0.25 on the feature aggregation layer and 0.15 elsewhere, and making the weight_decay=1e-3. We found these parameters best reduced overfitting 
+Dropout of 0.25 on the feature aggregation layer and 0.15 elsewhere, and making the weight_decay=1e-3. We found these parameters best reduced overfitting.
 
-*To do the blind version:*
+*Blind Model:*
 In DataLoader.py, on line 85, there is a comment block section with 4 lines of code to uncomment in order to mask the visual input and perform the blind version of the experiment. 
 
 
 ## HME
 
-Github: https://github.com/fanchenyou/HME-VideoQA
+Find the code and set-up instructions on the [HME Github](https://github.com/fanchenyou/HME-VideoQA)
 
-Training script:
-python main.py --task=FrameQA --metric=[METRIC]
+### Run model
 
-Testing script: 
-python main.py --task=FrameQA --metric=[METRIC] --test=1
+Train: ```python main.py --task=FrameQA --metric=[METRIC]```
 
-Updated code files: 
+Test: ```python main.py --task=FrameQA --metric=[METRIC] --test=1```
 
-main.py
-make_tgif.py
-data_util/tgif.py
+### Updated code files
 
-Appearance features:
+* main.py
+* make_tgif.py
+* data_util/tgif.py
 
-TGIF_RESNET_pool5.hdf5
-tgif-qa_frameqa_motion_feat.h5	            
-TGIF_RESNEXT.hdf5
+### Appearance features
 
-TODO: PATH
+* TGIF_RESNET_pool5.hdf5
+* tgif-qa_frameqa_motion_feat.h5	            
+* TGIF_RESNEXT.hdf5
+
+### Other adjustments
+
+*TODO: PATH:*
 There are paths to change in all 3 files.
 
-MODEL CHANGE
-The HME code saves models regularly. To choose which saved model to use, change the path on line 134 of main.py
+*MODEL CHANGE:*
+The HME code saves models regularly. To choose which saved model to use, change the path on line 134 of main.py.
 
 
 ## PSAC
 
-Github: https://github.com/lixiangpengcs/PSAC 
+Find the code and set-up instructions on the [PSAC Github](https://github.com/lixiangpengcs/PSAC) 
 
-Training script:
-python main_frame.py --metric=[METRIC] --refresh=true
 
-Testing script: 
-python main_frame.py --metric=[METRIC] --test_phase=True
+### Run model
 
-Updated code files: 
+Train: ```python main_frame.py --metric=[METRIC] --refresh=true```
 
-dataset.py
-FrameQA_model.py
-main_frame.py
-train.py
+Test: ```python main_frame.py --metric=[METRIC] --test_phase=True```
 
-We also changed code so that it would not re-tokenize the data every time we trained. Make these two directories for it to be saved.
+### Updated code files
 
-data/tokenized
-data/cache
+* dataset.py
+* models/FrameQA_model.py
+* main_frame.py
+* train.py
 
-Appearance
+We also changed code so that it would not re-tokenize the data every time we trained. Make these two directories for saving the tokenized data.
 
-TGIF_RESNET_pool5.hdf5
+* data/tokenized
+* data/cache
 
-TODO: PATH
+## Appearance features
 
-dataset.py
-main_frame.py
+* TGIF_RESNET_pool5.hdf5
+
+### Other adjustments
+
+*TODO: PATH:* There are paths to change in all 3 dataset.py and main_frame.py
 
