@@ -15,16 +15,17 @@ year={2021}
 
 ## Appearance Features
 
-We shared appearance features across models for consistency (RESNET for appearance and RESNEXT for accuracy). The format of those features differs across models, so we include 4 visual features files.
+We shared appearance features across models for consistency (RESNET for appearance and RESNEXT for accuracy). The format of those features differs across models, so we include 4 visual features files. Find the visual features stored [here](https://drive.google.com/drive/u/0/folders/1c51H6rxGHcc8en_sboFxH7Oqb_SVb2oQ).
 
-* tgif-qa_frameqa_appearance_feat.h5
-* tgif-qa_frameqa_motion_feat.h5
-* TGIF_RESNET_pool5.hdf5           
-* TGIF_RESNEXT.hdf5
+* tgif-qa_frameqa_appearance_feat.h5 (10 GB)
+* tgif-qa_frameqa_motion_feat.h5 (630 MB)
+* TGIF_RESNET_pool5.hdf5 (2.75 GB) 
+* TGIF_RESNEXT.hdf5 (2.75 GB)
 
 ## Questions formatted
 
-All three models use a .csv version of the data. 
+All three models use a .csv version of the data. Find the questions in a .csv format stored [here](https://drive.google.com/drive/u/0/folders/14GtSnCvM8Is73QcxTsoQe1TuW-5yZfiB).
+
 
 * Balanced (--metric balanced): 
 * Compo (--metric compo): 
@@ -32,7 +33,7 @@ All three models use a .csv version of the data.
 
 # Models
 
-For each model we’ve included the files with changed code. Throughout the files, areas that need paths updated are marked with the comment ```TODO: PATH```. HCRN and HME each save multiple versions of the mode. The location specifying which model will be used is marked with the comment ```MODEL CHANGE```.
+For each model we’ve included the files with changed code. The files listed below can be found in the ```models/[MODEL]``` directory. Throughout the files, areas that need paths updated are marked with the comment ```TODO: PATH```. HCRN and HME each save multiple versions of the mode. The location specifying which model will be used is marked with the comment ```MODEL CHANGE```.
 
 ## HCRN
 
