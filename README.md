@@ -15,7 +15,7 @@ year={2021}
 
 ## Appearance Features
 
-We shared appearance features across models for consistency (RESNET for appearance and RESNEXT for accuracy). The format of those features differs across models, so we include 4 visual features files. Find the visual features stored [here](https://drive.google.com/drive/u/0/folders/1c51H6rxGHcc8en_sboFxH7Oqb_SVb2oQ).
+We shared appearance features across models for consistency (RESNET for appearance and RESNEXT for accuracy). The format of those features differs across models, so we include 4 visual features files. Find the visual features stored [here](https://drive.google.com/drive/u/0/folders/1c51H6rxGHcc8en_sboFxH7Oqb_SVb2oQ). The file names are the same as the origional baselines (so they reference tgif-qa). However, these files include the features for the videos used in AGQA.
 
 * tgif-qa_frameqa_appearance_feat.h5 (10 GB)
 * tgif-qa_frameqa_motion_feat.h5 (630 MB)
