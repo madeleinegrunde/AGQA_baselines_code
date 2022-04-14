@@ -15,6 +15,7 @@ import random
 load_csv = {'Count':'Count','Trans':'Transition','FrameQA':'FrameQA','Action':'Action'}
 mc_task = ['trans','action']
 
+
 # TODO: PATH
 with open('../../HME/HME-VideoQA/gif-qa/data/feats/strID2numID.json', 'rb') as f:
     str2num = json.load(f)
@@ -207,6 +208,11 @@ def get_q_a_v_pair(file, ans2label, mode,task, cache_root='data/cache'):
     
     for i, row in enumerate(total_q.iterrows()):
         q_a_v = get_ques_pairs(row, task)
+
+        # Edge case: Test set questions that don't have answers in AGQA-Decomp
+        if len(q_a_v) < 3:
+            q_a_v = [q_a_v[0], "yes", q_a_v[1]]
+
         target.append({
             'id': i,
             'question': q_a_v[0],
@@ -259,11 +265,11 @@ def _load_dataset(dataroot, mode,task, ans2label, sentence_path='./data/', metri
     if os.path.exists(answer_path):
         print("path exists")
         answers = pickle.load(open(answer_path, 'rb'))
-        # option to validate with a sample of questions
+        # Option to validate with a sample of questions
         if sample:
             print('type of answers before sample', type(answers), len(answers))
             answers = random.sample(answers, k=50000)
-            print('type of answers after saple', type(answers), len(answers))
+            print('type of answers after sample', type(answers), len(answers))
         entries = sorted(answers, key=lambda x: x['id'])
     else:
         print('path does not exist')
@@ -292,7 +298,6 @@ class VQAFeatureDataset(Dataset):
         self.metric = metric
         self.sample = sample
         self.Mul_Choice = Mul_Choice
-
         f = os.path.join('./data', 'cache', '%s_ans2label.pkl'%task)
         if not os.path.exists(f):
             print('Constructing ans2label ...')

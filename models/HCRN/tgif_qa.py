@@ -228,7 +228,7 @@ def process_questions_openended(args):
 
         # make sure split doesnt split a video
 
-        while (video_ids[split - 1] == video_ids[split]): 
+        while (video_ids[split - 1][:5] == video_ids[split][:5]): 
             split = split + 1
 
         train_questions = questions[:split]

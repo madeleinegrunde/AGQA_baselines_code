@@ -721,7 +721,7 @@ class DatasetTGIF():
                                  use_moredata=self.use_moredata,
                                  max_n_videos=self.max_n_videos,
                                  data_type=self.data_type,
-                                dataframe_dir=self.dataframe_dir,
+                                 dataframe_dir=self.dataframe_dir,
                                  vocab_dir=self.vocabulary_dir)
 
         data_split.ids = self.ids[-int(ratio*len(self.ids)):]

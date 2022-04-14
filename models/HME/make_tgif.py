@@ -31,6 +31,7 @@ def getTypeToCSV(metric):
                'Action' : 'Train_action_question.csv'}
     return TYPE_TO_CSV
 
+# TODO: PATH
 with open('../../../video/strID2numID.json', 'rb') as f:
     str2num = json.load(f)
 
@@ -53,12 +54,14 @@ class DatasetTGIF():
                  data_type=None,
                  dataframe_dir=None,
                  vocab_dir=None,
-		 metric='balanced'):
+		 metric='balanced',
+                 csv_split=0):
         self.metric=metric
         self.dataframe_dir = dataframe_dir
         self.vocabulary_dir = vocab_dir
         self.use_moredata = use_moredata
         self.dataset_name = dataset_name
+        self.csv_split = csv_split
         self.image_feature_net = image_feature_net
         self.layer = layer
         self.max_length = max_length
@@ -71,9 +74,8 @@ class DatasetTGIF():
             self.data_df = self.data_df[:max_n_videos]
         self.ids = list(self.data_df['key'])
 
-
-#        Changed shuffling to later in code
-#        if dataset_name == 'train':
+        # Changed shuffling to later in code
+#       if dataset_name == 'train':
 #            random.shuffle(self.ids)
 
         self.feat_h5 = self.read_tgif_from_hdf5()
@@ -100,8 +102,8 @@ class DatasetTGIF():
         # TODO: PATH
         if self.image_feature_net.upper() == "CONCAT":
             if self.layer.lower() == "fc":
-		resnet_file = '../../TGIF_RESNET_pool5.hdf5'
-		c3d_file = '../../../video/appearance/tgif-qa_frameqa_motion_feat.h5'
+                resnet_file = '../../TGIF_RESNET_pool5.hdf5'
+		c3d_file = '../../../video/appearance/tgif-qa_frameqa_motion_feat.h5'		
             elif self.layer.lower() == "conv":
                 resnet_file = '../../TGIF_RESNET_pool5.hdf5'
 	        c3d_file = '../../TGIF_RESNEXT.hdf5'
@@ -117,7 +119,10 @@ class DatasetTGIF():
 
         if self.data_type == 'FrameQA':
             train_data_path = os.path.join(self.dataframe_dir, 'Train_frameqa_question-%s.csv' % metric)
-            test_data_path = os.path.join(self.dataframe_dir, 'Test_frameqa_question-%s.csv' % metric)
+            if self.csv_split == 0:
+                test_data_path = os.path.join(self.dataframe_dir, 'Test_frameqa_question-%s.csv' % metric)
+            else:
+                test_data_path = os.path.join(self.dataframe_dir, 'Test_frameqa_question-%s_%s.csv' % (metric, self.csv_split))
             self.total_q = pd.read_csv(os.path.join(self.dataframe_dir,'Total_frameqa_question-%s.csv' % metric), sep=',')
         elif self.data_type == 'Count':
             train_data_path = os.path.join(self.dataframe_dir, 'Train_count_question.csv')
@@ -384,7 +389,7 @@ class DatasetTGIF():
                 video_feature = np.transpose(
                     video_feature.reshape([-1,2048,7,7]), [0,2,3,1])
                 assert list(video_feature.shape[1:]) == [7, 7, 2048]
-
+                
         # change feature file paths
         elif self.image_feature_net.lower() == 'concat':
             assert self.layer.lower() in ['fc', 'conv']
@@ -395,19 +400,20 @@ class DatasetTGIF():
                 c3d_feature = f_app['resnet_features'][video_id]
             if len(c3d_feature.shape) == 1:
                 c3d_feature = np.expand_dims(c3d_feature, axis=0)
+
             if not len(c3d_feature) == len(resnet_feature):
                 max_len = min(len(c3d_feature),len(resnet_feature))
                 c3d_feature = c3d_feature[:max_len]
                 resnet_feature = resnet_feature[:max_len]
 
-	   # Reshape features
-	    c3d_feature = np.concatenate((c3d_feature, c3d_feature), axis=1		
+            # Reshape features
+	    c3d_feature = np.concatenate((c3d_feature, c3d_feature), axis=1)
 
             if self.layer.lower() == 'fc':
                 video_feature = np.concatenate((c3d_feature, resnet_feature),
                                                 axis=len(c3d_feature.shape)-1)
                 video_feature = np.expand_dims(video_feature, axis=1)
-                video_feature = np.expand_dims(video_feature, axis=1)=
+                video_feature = np.expand_dims(video_feature, axis=1)
 		assert list(video_feature.shape[1:]) == [1, 1, 4096+2048]
             elif self.layer.lower() == 'conv':
                 c3d_feature = np.transpose(c3d_feature.reshape([-1,2048,7,7]), [0,2,3,1]) # we use resnet C3D
@@ -554,6 +560,7 @@ class DatasetTGIF():
             'answer_type': batch_answer_type,
             'debug_sent': batch_debug_sent
         }
+
         return ret
 
     def get_Count_question(self, key):
@@ -713,7 +720,7 @@ class DatasetTGIF():
             qnum = len(question.split())
             question_word_nums.append(qnum)
                     
-                            
+            
             raw_sentences = MC_dict['raw_sentences']
             
             '''raw_sentences
@@ -834,11 +841,16 @@ class DatasetTGIF():
                                  max_n_videos=self.max_n_videos,
                                  data_type=self.data_type,
                                  dataframe_dir=self.dataframe_dir,
-                                 vocab_dir=self.vocabulary_dir)
+                                 vocab_dir=self.vocabulary_dir,
+                                 csv_split=self.csv_split)
 
-        data_split.ids = self.ids[-int(ratio*len(self.ids)):]
-        self.ids = self.ids[:-int(ratio*len(self.ids))]
-	
+        # Altered dataset splitting to avoid overlap in video
+        split = int(ratio*len(self.ids))
+        while (self.ids[-(split + 1)][:5] == self.ids[-split][:5]):
+            split = split - 1
+        data_split.ids = self.ids[-split:]
+        self.ids = self.ids[:-split]	
+
 	random.shuffle(data_split.ids)
 	random.shuffle(self.ids)        
 

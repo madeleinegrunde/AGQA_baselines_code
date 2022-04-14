@@ -79,7 +79,10 @@ def train(cfg):
         'k_max_clip_level': cfg.train.k_max_clip_level,
         'spl_resolution': cfg.train.spl_resolution,
         'vocab': train_loader.vocab,
-        'question_type': cfg.dataset.question_type
+        'question_type': cfg.dataset.question_type,
+        'dropout_style': cfg.train.dropout_style, # NEW DROPOUT
+        'dropout_prob': cfg.train.dropout_prob, # NEW DROPOUT
+        'crn_dropout_prob': cfg.train.crn_dropout_prob # NEW DROPOUT
     }
     model_kwargs_tosave = {k: v for k, v in model_kwargs.items() if k != 'vocab'}
     model = HCRN.HCRNNetwork(**model_kwargs).to(device)

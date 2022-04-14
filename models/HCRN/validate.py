@@ -103,18 +103,18 @@ if __name__ == '__main__':
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     cfg.dataset.save_dir = os.path.join(cfg.dataset.save_dir, cfg.exp_name)
     
+    
     # MODEL CHANGE
     ############## CHOOSE WHICH MODEL TO USE ######################
     # This one is the most recent model
-    ckpt = os.path.join(cfg.dataset.save_dir, 'ckpt', 'model-current.pt')
-
+    #ckpt = os.path.join(cfg.dataset.save_dir, 'ckpt', 'model-current.pt')
     # This one is the highest validation
-    #ckpt = os.path.join(cfg.dataset.save_dir, 'ckpt', 'model.pt')
+    ckpt = os.path.join(cfg.dataset.save_dir, 'ckpt', 'model.pt')
 
     assert os.path.exists(ckpt)
-    ##############################################################
-    
-    
+    ##########################################################
+
+
     # load pretrained model
     loaded = torch.load(ckpt, map_location='cpu')
     model_kwargs = loaded['model_kwargs']

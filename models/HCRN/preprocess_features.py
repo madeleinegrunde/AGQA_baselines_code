@@ -197,6 +197,8 @@ def generate_h5(model, video_ids, num_clips, outfile):
             i1 = i0 + 1
             feat_dset[i0:i1] = clip_feat
             video_ids_dset[i0:i1] = strId2numId[video_id]
+
+
             i0 = i1
             _t['misc'].toc()
             if (i % 1000 == 0):
@@ -231,6 +233,7 @@ if __name__ == '__main__':
     else:
         raise Exception('Feature type not supported!')
     # set gpu
+
     torch.cuda.set_device(args.gpu_id)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)

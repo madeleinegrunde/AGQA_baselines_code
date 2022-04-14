@@ -77,18 +77,28 @@ class InputUnitLinguistic(nn.Module):
 
 
 class InputUnitVisual(nn.Module):
-    def __init__(self, k_max_frame_level, k_max_clip_level, spl_resolution, vision_dim, module_dim=512):
+    def __init__(self, k_max_frame_level, k_max_clip_level, spl_resolution, vision_dim, module_dim=512,
+                 dropout_style=0, dropout_prob=0.10, crn_dropout_prob=0.10): # NEW DROPOUT
         super(InputUnitVisual, self).__init__()
 
-        self.clip_level_motion_cond = CRN(module_dim, k_max_frame_level, k_max_frame_level, gating=False, spl_resolution=spl_resolution)
+        self.clip_level_motion_cond = CRN(module_dim, k_max_frame_level, k_max_frame_level, gating=False, spl_resolution=spl_resolution,
+                                          dropout_style=dropout_style, crn_dropout_prob=crn_dropout_prob) # NEW DROPOUT
         self.clip_level_question_cond = CRN(module_dim, k_max_frame_level-2, k_max_frame_level-2, gating=True, spl_resolution=spl_resolution)
-        self.video_level_motion_cond = CRN(module_dim, k_max_clip_level, k_max_clip_level, gating=False, spl_resolution=spl_resolution)
+        self.video_level_motion_cond = CRN(module_dim, k_max_clip_level, k_max_clip_level, gating=False, spl_resolution=spl_resolution,
+                                           dropout_style=dropout_style, crn_dropout_prob=crn_dropout_prob) # NEW DROPOUT
         self.video_level_question_cond = CRN(module_dim, k_max_clip_level-2, k_max_clip_level-2, gating=True, spl_resolution=spl_resolution)
 
         self.sequence_encoder = nn.LSTM(vision_dim, module_dim, batch_first=True, bidirectional=False)
-        self.clip_level_motion_proj = nn.Linear(vision_dim, module_dim)
-        self.video_level_motion_proj = nn.Linear(module_dim, module_dim)
-        self.appearance_feat_proj = nn.Linear(vision_dim, module_dim)
+
+        if dropout_style == 0:
+            self.clip_level_motion_proj = nn.Linear(vision_dim, module_dim)
+            self.video_level_motion_proj = nn.Linear(module_dim, module_dim)
+            self.appearance_feat_proj = nn.Linear(vision_dim, module_dim)
+        elif dropout_style == 1:
+            # NEW DROPOUT
+            self.clip_level_motion_proj = nn.Sequential(nn.Dropout(dropout_prob), nn.Linear(vision_dim, module_dim))
+            self.video_level_motion_proj = nn.Sequential(nn.Dropout(dropout_prob), nn.Linear(module_dim, module_dim))
+            self.appearance_feat_proj = nn.Sequential(nn.Dropout(dropout_prob), nn.Linear(vision_dim, module_dim))
 
         self.question_embedding_proj = nn.Linear(module_dim, module_dim)
 
@@ -209,11 +219,14 @@ class OutputUnitCount(nn.Module):
 
 
 class HCRNNetwork(nn.Module):
-    def __init__(self, vision_dim, module_dim, word_dim, k_max_frame_level, k_max_clip_level, spl_resolution, vocab, question_type):
+    def __init__(self, vision_dim, module_dim, word_dim, k_max_frame_level, k_max_clip_level, spl_resolution, vocab, question_type,
+                 dropout_style, dropout_prob, crn_dropout_prob): # NEW DROPOUT
         super(HCRNNetwork, self).__init__()
 
         self.question_type = question_type
         self.feature_aggregation = FeatureAggregation(module_dim)
+
+        self.dropout_style = dropout_style # NEW DROPOUT
 
         if self.question_type in ['action', 'transition']:
             encoder_vocab_size = len(vocab['question_answer_token_to_idx'])
@@ -233,7 +246,7 @@ class HCRNNetwork(nn.Module):
             self.num_classes = len(vocab['answer_token_to_idx'])
             self.linguistic_input_unit = InputUnitLinguistic(vocab_size=encoder_vocab_size, wordvec_dim=word_dim,
                                                              module_dim=module_dim, rnn_dim=module_dim)
-            self.visual_input_unit = InputUnitVisual(k_max_frame_level=k_max_frame_level, k_max_clip_level=k_max_clip_level, spl_resolution=spl_resolution, vision_dim=vision_dim, module_dim=module_dim)
+            self.visual_input_unit = InputUnitVisual(k_max_frame_level=k_max_frame_level, k_max_clip_level=k_max_clip_level, spl_resolution=spl_resolution, vision_dim=vision_dim, module_dim=module_dim, dropout_style=self.dropout_style, dropout_prob=dropout_prob, crn_dropout_prob=crn_dropout_prob) # NEW DROPOUT
             self.output_unit = OutputUnitOpenEnded(num_answers=self.num_classes)
 
         init_modules(self.modules(), w_init="xavier_uniform")

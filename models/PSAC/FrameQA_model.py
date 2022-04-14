@@ -25,12 +25,12 @@ class FrameQAModel(nn.Module):
         self.vid_encoder = vid_encoder
         self.ques_encoder = ques_encoder
         self.classifier = classifier
-
+        self.dropout = nn.Dropout(dropout) # NEW DROPOUT
 
     def forward(self, v, q_w, q_c, labels, return_attns=False):
         # visual info
-        vid_output = self.vid_encoder(v)  # v : batch_size x v_len x ctx_dim  # batch_size x v_len x d_v
-        vid_output = v + vid_output
+        vid_output = v + self.vid_encoder(v)  # v : batch_size x v_len x ctx_dim  # batch_size x v_len x d_v
+        vid_output = self.dropout(vid_output) # NEW DROPOUT
         fus_output = self.ques_encoder(vid_output, q_w, q_c)
         logits = self.classifier(fus_output)
         out = F.log_softmax(logits, dim=1)
@@ -41,14 +41,15 @@ class FrameQAModel(nn.Module):
         num_data = 0
         results = []
         j = 0
-
         for v, q_w, q_c, a, ques_eng, ans_eng, idx, key in iter(dataloader):
-            v = Variable(v).cuda()
-            q_w = Variable(q_w).cuda()
-            q_c = Variable(q_c).cuda()
-            pred = self.forward(v, q_w, q_c, None)
-            # //////////// changed to recieve pred_y
-            batch_score, preds = compute_score_with_logits(pred, a.cuda())
+            with torch.no_grad():
+                v = Variable(v).cuda()
+                q_w = Variable(q_w).cuda()
+                q_c = Variable(q_c).cuda()
+                pred = self.forward(v, q_w, q_c, None)
+                # changed to recieve pred_y
+                batch_score, preds = compute_score_with_logits(pred, a.cuda())
+
             score += batch_score
             num_data += pred.size(0)
             prediction = torch.max(pred, 1)[1]
@@ -56,7 +57,7 @@ class FrameQAModel(nn.Module):
             if j % 100 == 0:
                 print('%s/%s' % (j, len(iter(dataloader))))
 
-            # ///////////////added in the stuff below, but copied from sample() function
+            # added in lines below, but copied from sample() function
             prediction = np.array(prediction.cpu().data)
             if test:
                 for ques, pred, ans, idx, q_id in zip(ques_eng, list(prediction), ans_eng, idx, key):
@@ -119,9 +120,9 @@ class FrameQAModel(nn.Module):
         score = float(score) / len(dataloader.dataset)
         return score
 
-def build_temporalAtt(task_name, n_layer, dataset, num_hid, dictionary, glove_file):
+def build_temporalAtt(task_name, n_layer, dataset, num_hid, dictionary, glove_file, dropout=0.1): # NEW DROPOUT
     vid_encoder = Encoder(n_layer=n_layer, n_head=8, d_k=256, d_v=256, v_len=36, v_emb_dim=300,
-                               d_model=2048, d_inner_hid=512, dropout=0.1)
+                               d_model=2048, d_inner_hid=512, dropout=dropout) # NEW DROPOUT: Dropout originally was 0.1
     w = WordEmbedding(dictionary.ntoken, dictionary.c_ntoken, 300, 64, 0.1)
     word_mat, char_mat = w.init_embedding(dictionary, glove_file, task_name)
     ques_encoder = Ques_Encoder(word_mat, char_mat)

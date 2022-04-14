@@ -89,6 +89,7 @@ class VideoQADataset(Dataset):
         #appearance_feat = torch.from_numpy(appearance_feat).type(torch.FloatTensor)
         #motion_feat = torch.from_numpy(motion_feat).type(torch.FloatTensor)
         #################################################################
+
         return (
             video_idx, question_idx, answer, ans_candidates, ans_candidates_len, appearance_feat, motion_feat, question,
             question_len)
@@ -128,6 +129,7 @@ class VideoQADataLoader(DataLoader):
                 video_ids = np.asarray(unzipped[2])
                 q_ids = list(unzipped[3])
                 answers = list(unzipped[4])
+
             glove_matrix = obj['glove']
             ans_candidates = np.zeros(5)
             ans_candidates_len = np.zeros(5)

@@ -36,6 +36,10 @@ def parse_args():
     # ////////////
     parser.add_argument('--metric', type=str, default='balanced')
     # //////////// added ^ metric
+    parser.add_argument('--load_saved', type=int, default=0, help='Set equal to 1 to load the most recent model')
+    parser.add_argument('--dropout', type=float, default=0.15) # NEW DROPOUT
+    parser.add_argument('--lr', type=float, default=0.003)
+    parser.add_argument('--weight_decay', type=float, default=0.000005)
     args = parser.parse_args()
     return args
 
@@ -46,6 +50,7 @@ if __name__ == '__main__':
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
     torch.backends.cudnn.benchmark = True
+    torch.autograd.set_detect_anomaly(True)
     print('parameters:', args)
     print('task:',args.task,'model:', args.model)
 
@@ -55,26 +60,33 @@ if __name__ == '__main__':
 
     train_dset = VQAFeatureDataset(args, dictionary, args.sentense_file_path,args.feat_category,args.feat_path, mode='Train', metric=args.metric)
 
-    #val_dset = VQAFeatureDataset(args, dictionary, args.sentense_file_path,args.feat_category,args.feat_path, mode='Valid')
-    eval_dset = VQAFeatureDataset(args, dictionary, args.sentense_file_path,args.feat_category,args.feat_path, mode='Test', metric=args.metric)
+    val_dset = VQAFeatureDataset(args, dictionary, args.sentense_file_path,args.feat_category,args.feat_path, mode='Valid', metric=args.metric)
+    #eval_dset = VQAFeatureDataset(args, dictionary, args.sentense_file_path,args.feat_category,args.feat_path, mode='Test', metric=args.metric)
     batch_size = args.batch_size
 
     model_name = args.task+'_model'
-    model = getattr(locals()[model_name], 'build_%s' % args.model)(args.task, args.vid_enc_layers, train_dset, args.num_hid, dictionary, args.glove_file_path).cuda()
+    model = getattr(locals()[model_name], 'build_%s' % args.model)(args.task, args.vid_enc_layers, train_dset,
+                                                                   args.num_hid, dictionary, args.glove_file_path,
+                                                                   dropout=args.dropout).cuda() # NEW DROPOUT
 
     print('========start train========')
     model = model.cuda()
-
     train_loader = DataLoader(train_dset, batch_size, shuffle=True, num_workers=1)
-    #val_loader = DataLoader(val_dset, batch_size, shuffle=True, num_workers=1)
-    eval_loader = DataLoader(eval_dset, batch_size, shuffle=False, num_workers=1)
+    val_loader = DataLoader(val_dset, batch_size, shuffle=False, num_workers=1)
+    #eval_loader = DataLoader(eval_dset, batch_size, shuffle=False, num_workers=1)
 
     if args.test_phase:
-        #ckpt = 0# load model here
         # MODEL CHANGE
-        ckpt = 'saved_models/FrameQA/exp-11/model-current.pth'
+        #ckpt = 0# load model here
+        ckpt = 'saved_models/FrameQA/exp-11/model.pth'
         model.load_state_dict(torch.load(ckpt))
+        model.eval()
         eval_score = model.evaluate(eval_loader, eval_dset, test=True)[0]
         print("EVAL SCORE", eval_score)
     else:
-        train(model, args, eval_dset, dictionary, train_loader, eval_loader, args.epochs, args.output)
+        if args.load_saved == 1:
+            print('Loading most recent model')
+            ckpt = 'saved_models/FrameQA/exp-11/model-current.pth'
+            model.load_state_dict(torch.load(ckpt))
+
+        train(model, args, val_dset, dictionary, train_loader, val_loader, args.epochs, args.output)

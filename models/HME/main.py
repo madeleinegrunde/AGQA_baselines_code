@@ -11,7 +11,6 @@ import pickle
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
 def main(args):
     torch.manual_seed(1)
     ### add arguments ###
@@ -26,7 +25,7 @@ def main(args):
 
 
     
-    args.save_model_path = args.save_path + '%s_%s_%s%s' % (args.task,args.image_feature_net,args.layer,args.memory_type)
+    args.save_model_path = args.save_path + '%s_%s_%s%s' % (args.task,args.image_feature_net,args.layer,args.memory_type) 
     # Create model directory
     if not os.path.exists(args.save_model_path):
         os.makedirs(args.save_model_path)
@@ -41,26 +40,27 @@ def main(args):
 
      # //////////// added in metric as arg. 
     train_dataset = DatasetTGIF(dataset_name='train',
-                                             image_feature_net=args.image_feature_net,
-                                             layer=args.layer,
-                                             max_length=args.max_sequence_length,
-                                             data_type=args.task,
-                                             dataframe_dir=args.df_dir,
-                                             vocab_dir=args.vc_dir,
-                         metric=args.metric)
-    train_dataset.load_word_vocabulary()
-
-    val_dataset = train_dataset.split_dataset(ratio=0.1)
-    val_dataset.share_word_vocabulary_from(train_dataset)
-    
-    test_dataset = DatasetTGIF(dataset_name='test',
                                 image_feature_net=args.image_feature_net,
                                 layer=args.layer,
                                 max_length=args.max_sequence_length,
                                 data_type=args.task,
                                 dataframe_dir=args.df_dir,
                                 vocab_dir=args.vc_dir,
-                metric=args.metric)
+                                metric=args.metric)
+    train_dataset.load_word_vocabulary()
+
+    val_dataset = train_dataset.split_dataset(ratio=0.1)
+    val_dataset.share_word_vocabulary_from(train_dataset)
+    
+    test_dataset = DatasetTGIF(dataset_name='test',
+                               image_feature_net=args.image_feature_net,
+                               layer=args.layer,
+                               max_length=args.max_sequence_length,
+                               data_type=args.task,
+                               dataframe_dir=args.df_dir,
+                               vocab_dir=args.vc_dir,
+                               metric=args.metric,
+                               csv_split=args.csv_split)
 
     test_dataset.share_word_vocabulary_from(train_dataset)
     
@@ -114,8 +114,8 @@ def main(args):
     
     if args.memory_type=='_mrm2s':
         rnn = AttentionTwoStream(args.task, feat_channel, feat_dim, text_embed_size, args.hidden_size,
-                             voc_len, args.num_layers, word_matrix, answer_vocab_size = answer_vocab_size, 
-                             max_len=args.max_sequence_length)
+                                 voc_len, args.num_layers, word_matrix, answer_vocab_size = answer_vocab_size, 
+                                 max_len=args.max_sequence_length)
     else:
         assert 1==2
         
@@ -131,10 +131,10 @@ def main(args):
             rnn.load_state_dict(torch.load('./saved_models/Trans_concat_fc_mrm2s/rnn-1500-l0.246-a78.068.pkl'))
         elif args.task == 'FrameQA':
             # MODEL CHANGE
-            rnn.load_state_dict(torch.load('./saved_models/FrameQA_concat_fc_mrm2s/rnn-13000-l1.602-a44.249.pkl'))
+            rnn.load_state_dict(torch.load('./saved_models/FrameQA_concat_fc_mrm2s/rnn-28800-l1.324-a42.492.pkl'))
         else:
             assert 1==2, 'Invalid task'
-    
+
     optimizer = torch.optim.Adam(rnn.parameters(), lr=args.learning_rate)
     
         
@@ -428,8 +428,7 @@ def main(args):
                 acc = rnn.accuracy(predictions, targets)
                 print('Train %s iter %d, loss %.3f, acc %.2f' % (args.task,iter,loss.data,acc.item()))
 
-
-            if args.test == 1 or (iter % 1000==0 and iter != 0): # In origional paper it was when % 100 == 0
+            if args.test == 1 or (iter % 800==0 and iter != 0): # In original paper it was when % 100 == 0
                 rnn.eval()
                 print("beginning eval")
 
@@ -484,7 +483,8 @@ def main(args):
                         n_iter = len(test_dataset) / args.batch_size
                         results = []
                         iter_test = 0
-                        for batch_chunk in test_dataset.batch_iter(1, args.batch_size, shuffle=False, sample=False):                            if iter_test % 10 == 0:
+                        for batch_chunk in test_dataset.batch_iter(1, args.batch_size, shuffle=False, sample=False):
+                            if iter_test % 10 == 0:
                                 print('%d/%d' % (iter_test, n_iter))
 
                             iter_test+=1
@@ -502,7 +502,6 @@ def main(args):
                             data_dict['question_lengths'] = question_lengths
                             data_dict['answers'] = answers
 
-
                             outputs, targets, predictions = rnn(data_dict, args.task)
 		                    
                             # Format results
@@ -510,7 +509,7 @@ def main(args):
                                 result = {}    
                                 result['question'] = q_token
                                 result['answer'] = idx2ans[a_idx[0]]
-                                result['prediction'] = idx2word[p_idx]
+                                result['prediction'] = idx2ans[p_idx]
                                 result['csv_q_id'] = q_id
                                 results.append(result)
 				
@@ -526,9 +525,8 @@ def main(args):
                                 print("%s/%s" % (num, len(results)))
                             result['question'] = [idx2word[i] for i in result['question']]
                         print("Done translating, now dumping to 'data/prediction/FrameQA_test_results-%s.json" % iter)
-                        with open('data/prediction/FrameQA_test_results-%s.json' % iter, 'w+') as f:
-                                json.dump(results, f)
-
+                        with open('data/prediction/FrameQA_test_results-%s-csv%s.json' % (iter, args.csv_split), 'w+') as f:
+                            json.dump(results, f)
 
                         print('[Test] iter %d, loss %.3f, acc %.2f' % (iter,losses.avg,accuracy.avg))
                         if args.test==1:
@@ -543,6 +541,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', type=int , default=0,
                         help='1-directly test, 0-normal training')
+    parser.add_argument("--csv_split", type=int, default=0,
+                        help="Which split of the csv to use. If 0, use the entire split")
     parser.add_argument('--task', type=str , default='FrameQA',
                          help='[Count, Action, FrameQA, Trans]')
     parser.add_argument('--feat_type', type=str , default='SpTp', 

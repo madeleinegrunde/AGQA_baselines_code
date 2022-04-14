@@ -26,7 +26,12 @@ __C.train.glove = True
 __C.train.k_max_frame_level = 16
 __C.train.k_max_clip_level = 8
 __C.train.spl_resolution = 1
+__C.train.dropout_style = 0
+__C.train.dropout_prob = 0.10
+__C.train.crn_dropout_prob = 0.10
+__C.train.weight_decay = 0.001
 __C.train = dict(__C.train)
+
 
 # validation
 __C.val = edict()

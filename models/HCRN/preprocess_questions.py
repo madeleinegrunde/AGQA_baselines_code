@@ -24,7 +24,7 @@ if __name__ == '__main__':
     np.random.seed(args.seed)
 
     if args.dataset == 'tgif-qa': # TODO: PATH
-        if args.mode == 'train':   
+        if args.mode == 'train':
             args.annotation_file = '~/storage/questions_csv/Train_frameqa_question-%s.csv' % args.metric
         elif args.mode == 'test':
             args.annotation_file = '~/storage/questions_csv/Test_frameqa_question-%s.csv' % args.metric
