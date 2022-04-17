@@ -1,6 +1,6 @@
 # Code for AGQA baselines
 
-This repository contains code for our baselines HCRN, HME, and PSAC. For all three baselines, we used their code for the FrameQA questions in the TGIF-QA benchmark, then adjusted to fit our data structure. These models are the baselines used for Action Genome Question Answering (AGQA) and AGQA-Decomp. For the AGQA benchmark, check out our paper [here](https://arxiv.org/pdf/2103.16002.pdf), and our benchmark data [here](https://cs.stanford.edu/people/ranjaykrishna/agqa/). For the AGQA-Decomp benchmark, check out our paper here, and our benchmark data [here](https://agqa-decomp.cs.washington.edu). Additionally, the evaluation scripts for the AGQA-Decomp benchmark can be found in the ```agqa_decomp_evaluation``` folder.
+This repository contains code for our baselines HCRN, HME, and PSAC. For all three baselines, we used their code for the FrameQA questions in the TGIF-QA benchmark, then adjusted to fit our data structure. These models are the baselines used for Action Genome Question Answering (AGQA) and AGQA-Decomp. For the AGQA benchmark, check out our paper [here](https://arxiv.org/pdf/2103.16002.pdf), and our benchmark data [here](https://cs.stanford.edu/people/ranjaykrishna/agqa/). For the AGQA-Decomp benchmark, check out our paper here, and our benchmark data [here](https://agqa-decomp.cs.washington.edu/#data). Additionally, the evaluation scripts for the AGQA-Decomp benchmark can be found in the ```agqa_decomp_evaluation``` folder.
 
 ```
 @inproceedings{GrundeMcLaughlin2021AGQA,
@@ -30,7 +30,7 @@ We shared appearance features across models for consistency (RESNET for appearan
 
 ## Questions formatted
 
-All three models use a .csv version of the data. For the AGQA benchmark, find the questions in a .csv format stored [here](https://drive.google.com/drive/u/0/folders/1eJ0XGK6pudUUJb1VFHf2HqxHYCXNOut4). For the AGQA-Decomp benchmark, visit [here](https://agqa-decomp.cs.washington.edu) for the questions in a .csv format.
+All three models use a .csv version of the data. For the AGQA benchmark, find the questions in a .csv format stored [here](https://drive.google.com/drive/u/0/folders/1eJ0XGK6pudUUJb1VFHf2HqxHYCXNOut4). For the AGQA-Decomp benchmark, visit [here](https://agqa-decomp.cs.washington.edu/#data) for the questions in a .csv format.
 
 
 * Balanced (--metric balanced): 
