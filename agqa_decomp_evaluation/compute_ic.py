@@ -28,6 +28,8 @@ def check_interaction_after_before_while(subquestions, q, subqs, consistency_com
     implied to be 'no'.
     '''
     q_answer = get_pred(subquestions[q], model_results)
+
+    # "Yes" check
     if q_answer == 'yes':
         only_yes = True
         one_valid = False
@@ -46,22 +48,22 @@ def check_interaction_after_before_while(subquestions, q, subqs, consistency_com
             wrong_condition = not only_yes
             update_dicts(consistency_compo, consistency_parent,
                          composition, q_type, 'Yes', wrong_condition)
-    else:
-         # Contrapositive: Check if there's a child answered 'no'
-        oneNo = False
-        for subq in subqs:
-            subq_type = subquestions[subq]['type']
-            if subq_type in banned_qtypes or subq_type not in yesNo:
-                continue
 
-            subq_answer = get_pred(subquestions[subq], model_results)
-            if subq_answer == 'no':
-                oneNo = True
+    # Contrapositive: Check if there's a child answered 'no'
+    oneNo = False
+    for subq in subqs:
+        subq_type = subquestions[subq]['type']
+        if subq_type in banned_qtypes or subq_type not in yesNo:
+            continue
 
-        if oneNo:
-            wrong_condition = q_answer != 'no'
-            update_dicts(consistency_compo, consistency_parent,
-                         composition, q_type, 'No', wrong_condition)
+        subq_answer = get_pred(subquestions[subq], model_results)
+        if subq_answer == 'no':
+            oneNo = True
+
+    if oneNo:
+        wrong_condition = q_answer != 'no'
+        update_dicts(consistency_compo, consistency_parent,
+                     composition, q_type, 'No', wrong_condition)
 
 def check_between_and(subquestions, q, subqs, consistency_compo, consistency_parent,
                       model_results, composition, q_type):
@@ -72,6 +74,8 @@ def check_between_and(subquestions, q, subqs, consistency_compo, consistency_par
     to be 'no'.
     '''
     q_answer = get_pred(subquestions[q], model_results)
+
+    # "Yes" checks
     if q_answer == 'yes':
         only_yes = True
         one_valid = False
@@ -88,7 +92,28 @@ def check_between_and(subquestions, q, subqs, consistency_compo, consistency_par
             wrong_condition = not only_yes
             update_dicts(consistency_compo, consistency_parent,
                          composition, q_type, 'Yes', wrong_condition)
-    elif q_answer == 'no':
+    else:
+        only_yes = True
+        one_valid = False
+        for subq in subqs:
+            subq_type = subquestions[subq]['type']
+            if subq_type in banned_qtypes or subq_type not in yesNo:
+                continue
+
+            one_valid = True
+            subq_answer = get_pred(subquestions[subq], model_results)
+            if subq_answer != 'yes':
+                only_yes = False
+        
+        if one_valid:
+            if only_yes:
+                wrong_condition = q_answer != 'yes'
+                update_dicts(consistency_compo, consistency_parent,
+                             composition, q_type, 'Yes', wrong_condition)
+            
+
+    # "No checks"
+    if q_answer == 'no':
         oneNo = False
         one_valid = False
         for subq in subqs:
@@ -106,7 +131,6 @@ def check_between_and(subquestions, q, subqs, consistency_compo, consistency_par
             update_dicts(consistency_compo, consistency_parent,
                          composition, q_type, 'No', wrong_condition)
     else:
-        only_yes = True
         oneNo = False
         one_valid = False
         for subq in subqs:
@@ -116,16 +140,10 @@ def check_between_and(subquestions, q, subqs, consistency_compo, consistency_par
 
             one_valid = True
             subq_answer = get_pred(subquestions[subq], model_results)
-            if subq_answer != 'yes':
-                only_yes = False
             if subq_answer == 'no':
                 oneNo = True
 
         if one_valid:
-            if only_yes:
-                wrong_condition = q_answer != 'yes'
-                update_dicts(consistency_compo, consistency_parent,
-                             composition, q_type, 'Yes', wrong_condition)
             if oneNo:
                 wrong_condition = q_answer != 'no'
                 update_dicts(consistency_compo, consistency_parent,
@@ -149,11 +167,19 @@ def check_xor(subquestions, q, subqs, consistency_compo, consistency_parent,
     subq1_answer = get_pred(subquestions[subq1], model_results)
     subq2_answer = get_pred(subquestions[subq2], model_results)
     
+    # "Yes" checks
     if q_answer == 'yes':
         wrong_condition = subq1_answer != 'yes' or subq2_answer != 'no'
         update_dicts(consistency_compo, consistency_parent, composition,
                      q_type, 'Yes', wrong_condition)
-    elif q_answer == 'no':
+    elif subq1_answer == 'yes' and subq2_answer == 'no':
+        wrong_condition = q_answer != 'yes'
+        update_dicts(consistency_compo, consistency_parent, composition,
+                     q_type, 'Yes', wrong_condition)        
+
+
+    # "No" checks
+    if q_answer == 'no':
         wrong_condition = subq1_answer == 'yes' and subq2_answer == 'no'
         update_dicts(consistency_compo, consistency_parent, composition,
                      q_type, 'No', wrong_condition)
@@ -161,10 +187,6 @@ def check_xor(subquestions, q, subqs, consistency_compo, consistency_parent,
         wrong_condition = q_answer != 'no'
         update_dicts(consistency_compo, consistency_parent, composition,
                      q_type, 'No', wrong_condition)
-    elif subq1_answer == 'yes' and subq2_answer == 'no':
-        wrong_condition = q_answer != 'yes'
-        update_dicts(consistency_compo, consistency_parent, composition,
-                     q_type, 'Yes', wrong_condition)        
 
 def check_equals(subquestions, hierarchy, q, subqs, consistency_compo, consistency_parent,
                  model_results, composition, q_type):
@@ -187,18 +209,22 @@ def check_equals(subquestions, hierarchy, q, subqs, consistency_compo, consisten
     subq2_answer = get_pred(subquestions[subq2], model_results)
 
     if subq1 in hierarchy:
+        # "Yes" checks
         if q_answer == 'yes':
             wrong_condition = subq1_answer != subq2_answer
             update_dicts(consistency_compo, consistency_parent, composition,
                          q_type, 'Yes', wrong_condition)
-        elif q_answer == 'no':
-            wrong_condition = subq1_answer == subq2_answer
-            update_dicts(consistency_compo, consistency_parent, composition,
-                         q_type, 'No', wrong_condition)
         elif subq1_answer == subq2_answer:
             wrong_condition = q_answer != 'yes'
             update_dicts(consistency_compo, consistency_parent, composition,
                          q_type, 'Yes', wrong_condition)
+
+
+        # "No" checks
+        if q_answer == 'no':
+            wrong_condition = subq1_answer == subq2_answer
+            update_dicts(consistency_compo, consistency_parent, composition,
+                         q_type, 'No', wrong_condition)
         elif subq1_answer != subq2_answer:
             wrong_condition = q_answer != 'no'
             update_dicts(consistency_compo, consistency_parent, composition,
@@ -206,11 +232,20 @@ def check_equals(subquestions, hierarchy, q, subqs, consistency_compo, consisten
     else:
         subq1_program = subquestions[subq1]['program']
         object = subq1_program[10:-1]
+
+        # "Yes" checks
         if q_answer == 'yes':
             wrong_condition = subq2_answer != object or subq1_answer != 'yes'
             update_dicts(consistency_compo, consistency_parent, composition,
                          q_type, 'Yes', wrong_condition)
-        elif q_answer == 'no':
+        elif subq2_answer == object:
+            wrong_condition = q_answer != 'yes'
+            update_dicts(consistency_compo, consistency_parent, composition,
+                         q_type, 'Yes', wrong_condition)            
+
+
+        # "No" checks
+        if q_answer == 'no':
             wrong_condition = subq2_answer == object
             update_dicts(consistency_compo, consistency_parent, composition,
                          q_type, 'No', wrong_condition)
@@ -218,10 +253,6 @@ def check_equals(subquestions, hierarchy, q, subqs, consistency_compo, consisten
             wrong_condition = q_answer != 'no'
             update_dicts(consistency_compo, consistency_parent, composition,
                          q_type, 'No', wrong_condition)
-        elif subq2_answer == object:
-            wrong_condition = q_answer != 'yes'
-            update_dicts(consistency_compo, consistency_parent, composition,
-                         q_type, 'Yes', wrong_condition)            
                     
 def check_choose(subquestions, hierarchy, q, subqs, consistency_compo, consistency_parent,
                  model_results, composition, q_type):
@@ -418,7 +449,7 @@ def compute_ic(model):
     with open(f'analysis_results/results_{model}.json', 'r') as f:
         model_results = json.load(f)
 
-    folder = '../test_hierarchies_hcrn'
+    folder = 'balanced_test_hierarchies'
     files = os.listdir(folder)
     for file in files:
         if file == 'isolated.json':
@@ -439,10 +470,11 @@ def compute_ic(model):
     save_ic_per_check(consistency_compo, model)
     save_ic_per_compo(consistency_compo, model)
     save_ic_per_parent(consistency_parent, model)
-            
+
+
 if __name__ == '__main__':
     # TODO: MODEL NAME. Replace the names in this list with the names of the models to evaluate
-    models = ['hcrn']
+    models = ['hcrn', 'hme', 'psac']
 
     for model in models:
         print(f'Computing IC scores for {model}')
